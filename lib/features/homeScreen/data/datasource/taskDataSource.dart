@@ -22,7 +22,8 @@ class TaskDataSourceImpl extends TaskDataSource {
   Future<List<TaskModel>> addToCompleted({required TaskModel task}) async {
     // TODO: implement addToCompleted
     final Box<TaskModel> completedBox = Hive.box<TaskModel>('completedBox');
-    final Box<TaskModel> allTaskBox = Hive.box<TaskModel>('allTaskBox');      // To update the box with allTaskBox data
+    final Box<TaskModel> allTaskBox = Hive.box<TaskModel>(
+        'allTaskBox'); // To update the box with allTaskBox data
 
     await completedBox.add(task);
 
@@ -35,7 +36,8 @@ class TaskDataSourceImpl extends TaskDataSource {
   Future<List<TaskModel>> addToInProgress({required TaskModel task}) async {
     // TODO: implement addToInProgress
     final Box<TaskModel> inProgressBox = Hive.box<TaskModel>('inProgressBox');
-    final Box<TaskModel> allTaskBox = Hive.box<TaskModel>('allTaskBox');      // To update the box with inProgressBox data
+    final Box<TaskModel> allTaskBox = Hive.box<TaskModel>(
+        'allTaskBox'); // To update the box with inProgressBox data
 
     await inProgressBox.add(task);
 
@@ -48,7 +50,8 @@ class TaskDataSourceImpl extends TaskDataSource {
   Future<List<TaskModel>> addToTaskList({required TaskModel task}) async {
     // TODO: implement addToTaskList
     final Box<TaskModel> taskBox = Hive.box<TaskModel>('taskBox');
-    final Box<TaskModel> allTaskBox = Hive.box<TaskModel>('allTaskBox');   // To update the box with taskBox data
+    final Box<TaskModel> allTaskBox = Hive.box<TaskModel>(
+        'allTaskBox'); // To update the box with taskBox data
 
     await taskBox.add(task);
 
@@ -90,6 +93,7 @@ class TaskDataSourceImpl extends TaskDataSource {
         : boxName == 'In Progress'
             ? 'inProgressBox'
             : 'completedBox');
+    final Box<TaskModel> allTaskBox = Hive.box<TaskModel>('allTaskBox');
 
     // Deletes Task from the current box
 
@@ -100,6 +104,15 @@ class TaskDataSourceImpl extends TaskDataSource {
     if (key != null) {
       await box.delete(key);
     }
+
+    final allBoxKey = allTaskBox.keys.firstWhere(
+        (key) => allTaskBox.get(key)?.taskId == taskId,
+        orElse: () => null);
+
+    if (allBoxKey != null) {
+      await allTaskBox.delete(allBoxKey);
+    }
+
     return box.values.toList();
   }
 
@@ -114,14 +127,17 @@ class TaskDataSourceImpl extends TaskDataSource {
       'In Progress': 'inProgressBox',
       'Done': 'completedBox',
     };
-    final allTaskBox = Hive.box<TaskModel>('allTaskBox');      // This box holds data from all boxes meant for filtering out as per query
+    final allTaskBox = Hive.box<TaskModel>(
+        'allTaskBox'); // This box holds data from all boxes meant for filtering out as per query
 
     final oldBox = Hive.box<TaskModel>(
-        allBoxes[Helper.existingTaskStatus(updatedTask.taskId)] ?? 'taskBox');    // This holds the boxName prior to updating status
-    final newBox = Hive.box<TaskModel>(allBoxes[boxName] ?? 'taskBox');           // This holds the boxName post selecting new status
+        allBoxes[Helper.existingTaskStatus(updatedTask.taskId)] ??
+            'taskBox'); // This holds the boxName prior to updating status
+    final newBox = Hive.box<TaskModel>(allBoxes[boxName] ??
+        'taskBox'); // This holds the boxName post selecting new status
 
     // Looks for the taskId in the old box so that it can be deleted
-    final key = oldBox.keys.firstWhere(                                           
+    final key = oldBox.keys.firstWhere(
       (k) => oldBox.get(k)?.taskId == updatedTask.taskId,
       orElse: () => null,
     );
@@ -130,8 +146,7 @@ class TaskDataSourceImpl extends TaskDataSource {
       await oldBox.delete(key);
     }
 
-    await newBox.add(updatedTask);       // Updates the new box
-    
+    await newBox.add(updatedTask); // Updates the new box
 
     // Deletes the old data by their taskId and updates itself with the new data
     final allKey = allTaskBox.keys.firstWhere(
